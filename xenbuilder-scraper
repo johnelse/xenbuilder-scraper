@@ -1,0 +1,55 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'nokogiri'
+require 'open-uri'
+
+def print_row(row)
+    row_string = '|'
+    row.xpath('th|td').each do |data|
+        row_string << data.content
+        row_string << '|'
+    end
+    row_string << '|'
+    puts row_string
+end
+
+def print_table(table)
+    table.xpath('tr').each do |row|
+        print_row(row)
+    end
+end
+
+def load_page(command, argument)
+    base_url = 'https://xenbuilder.uk.xensource.com/builds?'
+    url = ""
+
+    case command
+    when "branch"
+        url = "#{base_url}q_view=summary&q_product=carbon&q_branch=#{argument}"
+    when "build"
+        url = "#{base_url}q_view=details&q_product=carbon&q_number=#{argument}"
+    else
+        puts "Unknown command: #{command}"
+        exit 1
+    end
+
+    Nokogiri.HTML(open(url))
+end
+
+def run(command, argument)
+    doc = load_page command, argument
+    table = doc.xpath('//table[@class = "buildtable"]')
+    print_table table
+end
+
+def usage()
+    puts 'Usage: xenbuilder-scraper <command> <arg>'
+end
+
+if ARGV.length != 2
+    usage
+    exit 1
+else
+    run ARGV[0], ARGV[1]
+end
